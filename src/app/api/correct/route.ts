@@ -4,29 +4,27 @@ export async function POST(req: NextRequest) {
   try {
     const { system, content } = await req.json()
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const GEMINI_KEY = process.env.GEMINI_API_KEY!
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_KEY}`
+
+    const res = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
-        'anthropic-version': '2023-06-01',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 8000,
-        system,
-        messages: [{ role: 'user', content }],
+        system_instruction: { parts: [{ text: system }] },
+        contents: [{ role: 'user', parts: [{ text: content }] }],
+        generationConfig: { maxOutputTokens: 8000, temperature: 0.1 },
       }),
     })
 
     const data = await res.json()
 
     if (!res.ok) {
-      console.error('Anthropic error:', JSON.stringify(data))
+      console.error('Gemini error:', JSON.stringify(data))
       return NextResponse.json({ error: data?.error?.message || 'API error' }, { status: 500 })
     }
 
-    const result = data.content?.[0]?.text || ''
+    const result = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
     return NextResponse.json({ result })
   } catch (e: any) {
     console.error('Route error:', e)
