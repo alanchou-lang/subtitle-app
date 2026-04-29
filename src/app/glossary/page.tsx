@@ -236,3 +236,4 @@ export default function GlossaryPage() {
     </AppShell>
   )
 }
+export const dynamic = 'force-dynamic'
