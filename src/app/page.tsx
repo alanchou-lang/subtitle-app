@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-const ALLOWED_DOMAIN = process.env.NEXT_PUBLIC_ALLOWED_DOMAIN || 'sat.cool'
+const ALLOWED_DOMAIN = 'sat.cool'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
