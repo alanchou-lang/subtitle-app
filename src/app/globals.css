@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500&family=DM+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #ffffff;
+  --bg2: #f6f5f3;
+  --border: #e2e0db;
+  --blue: #1a56db;
+  --blue-lt: #eff4ff;
+  --blue-bd: #c3d4fa;
+}
+
+body {
+  background: var(--bg);
+  color: #111010;
+}
