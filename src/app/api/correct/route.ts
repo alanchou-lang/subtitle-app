@@ -24,7 +24,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: data?.error?.message || 'API error' }, { status: 500 })
     }
 
-    const result = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    let result = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+result = result.replace(/```vtt
+?/gi, '').replace(/```srt
+?/gi, '').replace(/```
+?/gi, '').trim()
     return NextResponse.json({ result })
   } catch (e: any) {
     console.error('Route error:', e)
