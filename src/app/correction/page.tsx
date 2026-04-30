@@ -58,7 +58,7 @@ export default function CorrectionPage() {
   async function runCorrection() {
     if (!raw.trim()) { setError('請先輸入字幕內容'); return }
     setLoading(true); setError('')
-    const allTerms = [...new Set([...terms, ...selectedMaster])]
+    const allTerms = Array.from(new Set([...terms, ...selectedMaster]))
     const isVTT = raw.trimStart().startsWith('WEBVTT')
     const fmt = isVTT ? 'VTT' : 'SRT'
     const termTxt = allTerms.length ? `\n\n術語（保持原樣）：${allTerms.join('、')}` : ''
