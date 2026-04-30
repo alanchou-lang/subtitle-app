@@ -220,12 +220,7 @@ export default function CorrectionPage() {
                     ))}
                   </div>
                 )}
-                {masterTerms.length > 0 && (
-                  <div className="mt-4">
-                    <div className="font-mono text-[10px] text-[#9a9590] tracking-[0.08em] uppercase mb-2 flex items-center justify-between">
-                      <span>術語庫 Master 術語</span>
-                      <div className="flex gap-2">
-                        <button onClick={() => setSelectedMaster(masterTerms.map(g => g.correct_term))} className="text-[#1a56db] hover:underline">全選</button>
+                 className="text-[#1a56db] hover:underline">全選</button>
                         <span className="text-[#e2e0db]">|</span>
                         <button onClick={() => setSelectedMaster([])} className="text-[#9a9590] hover:underline">全不選</button>
                       </div>
