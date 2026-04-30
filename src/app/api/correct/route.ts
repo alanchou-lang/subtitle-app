@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
     const { system, content } = await req.json()
 
     const GEMINI_KEY = process.env.GEMINI_API_KEY!
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_KEY}`
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_KEY}`
 
     const res = await fetch(url, {
       method: 'POST',
@@ -24,11 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: data?.error?.message || 'API error' }, { status: 500 })
     }
 
-    let result = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-result = result.replace(/```vtt
-?/gi, '').replace(/```srt
-?/gi, '').replace(/```
-?/gi, '').trim()
+    const result = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
     return NextResponse.json({ result })
   } catch (e: any) {
     console.error('Route error:', e)

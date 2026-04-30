@@ -13,6 +13,7 @@ const STEP_ICONS = [
 export default function CorrectionPage() {
   const [step, setStep] = useState(1)
   const [project, setProject] = useState('')
+  const [owner, setOwner] = useState('')
   const [raw, setRaw] = useState('')
   const [fileName, setFileName] = useState('')
   const [terms, setTerms] = useState<string[]>([])
@@ -79,7 +80,8 @@ export default function CorrectionPage() {
   function download() {
     const isVTT = corrected.trimStart().startsWith('WEBVTT')
     const ext = isVTT ? 'vtt' : 'srt'
-    const name = project || 'subtitle'
+    const today = new Date().toISOString().slice(0,10).replace(/-/g,'')
+    const name = [project, owner, today].filter(Boolean).join('_') || 'subtitle'
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([corrected], { type: 'text/plain;charset=utf-8' }))
     a.download = `${name}_corrected.${ext}`
@@ -87,7 +89,7 @@ export default function CorrectionPage() {
   }
 
   function reset() {
-    setStep(1); setProject(''); setRaw(''); setFileName(''); setTerms([]); setCorrected(''); setError('')
+    setStep(1); setProject(''); setOwner(''); setRaw(''); setFileName(''); setTerms([]); setCorrected(''); setError('')
   }
 
   const origLines = raw.split('\n').length
@@ -134,7 +136,13 @@ export default function CorrectionPage() {
                 <input type="text" value={project} onChange={e => setProject(e.target.value)}
                   placeholder="例：［2026-36］瓦基 AI"
                   className="w-full bg-white border-[1.5px] border-[#e2e0db] rounded-lg text-[14px] px-4 py-3 outline-none focus:border-[#1a56db] transition-colors placeholder:text-[#9a9590]" />
-                <div className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3 flex gap-2">
+                <div className="mt-4">
+                  <label className="block font-mono text-[10px] text-[#9a9590] tracking-[0.08em] uppercase mb-1.5">負責人</label>
+                  <input type="text" value={owner} onChange={e => setOwner(e.target.value)}
+                    placeholder="例：Alan"
+                    className="w-full bg-white border-[1.5px] border-[#e2e0db] rounded-lg text-[14px] px-4 py-3 outline-none focus:border-[#1a56db] transition-colors placeholder:text-[#9a9590]" />
+                </div>
+                <div className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3 flex gap-2 mt-4">
                   <span className="text-[14px]">💡</span>
                   <div className="font-mono text-[11px] text-[#9a9590] leading-relaxed">建議格式：［年份-流水號］專案簡稱<br />範例：［2026-36］瓦基 AI</div>
                 </div>
