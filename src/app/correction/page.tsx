@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AppShell from '@/components/AppShell'
+import { supabase } from '@/lib/supabase'
 
 const STEPS = ['這是哪個專案？', '上傳字幕檔', '有額外術語嗎？', '校正結果']
 const STEP_ICONS = [
@@ -18,10 +19,26 @@ export default function CorrectionPage() {
   const [fileName, setFileName] = useState('')
   const [terms, setTerms] = useState<string[]>([])
   const [termInput, setTermInput] = useState('')
+  const [masterTerms, setMasterTerms] = useState<{id:string, correct_term:string, category:string}[]>([])
+  const [selectedMaster, setSelectedMaster] = useState<string[]>([])
+  const [loadingTerms, setLoadingTerms] = useState(false)
   const [corrected, setCorrected] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<'result' | 'original'>('result')
+
+  useEffect(() => {
+    async function loadMaster() {
+      setLoadingTerms(true)
+      const { data } = await supabase.from('glossary').select('id,correct_term,category').eq('scope','master').order('category')
+      if (data) {
+        setMasterTerms(data)
+        setSelectedMaster(data.map((g:any) => g.correct_term))
+      }
+      setLoadingTerms(false)
+    }
+    loadMaster()
+  }, [])
 
   function handleFile(f: File) {
     const ext = f.name.split('.').pop()?.toUpperCase() || ''
@@ -41,9 +58,10 @@ export default function CorrectionPage() {
   async function runCorrection() {
     if (!raw.trim()) { setError('請先輸入字幕內容'); return }
     setLoading(true); setError('')
+    const allTerms = [...new Set([...terms, ...selectedMaster])]
     const isVTT = raw.trimStart().startsWith('WEBVTT')
     const fmt = isVTT ? 'VTT' : 'SRT'
-    const termTxt = terms.length ? `\n\n額外術語（保持原樣）：${terms.join('、')}` : ''
+    const termTxt = allTerms.length ? `\n\n術語（保持原樣）：${allTerms.join('、')}` : ''
     const sys = `你是專業字幕校正師 L，專門處理線上課程的繁體中文字幕檔。
 
 【核心校正規則】
@@ -78,8 +96,8 @@ export default function CorrectionPage() {
   }
 
   function download() {
-    const isVTT = true
-    const ext = 'vtt'
+    const isVTT = corrected.trimStart().startsWith('WEBVTT')
+    const ext = isVTT ? 'vtt' : 'srt'
     const today = new Date().toISOString().slice(0,10).replace(/-/g,'')
     const name = [project, owner, today].filter(Boolean).join('_') || 'subtitle'
     const a = document.createElement('a')
@@ -90,6 +108,7 @@ export default function CorrectionPage() {
 
   function reset() {
     setStep(1); setProject(''); setOwner(''); setRaw(''); setFileName(''); setTerms([]); setCorrected(''); setError('')
+    setSelectedMaster(masterTerms.map(g => g.correct_term))
   }
 
   const origLines = raw.split('\n').length
@@ -201,7 +220,36 @@ export default function CorrectionPage() {
                     ))}
                   </div>
                 )}
-                <div className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3 flex gap-2 mt-1">
+                {masterTerms.length > 0 && (
+                  <div className="mt-4">
+                    <div className="font-mono text-[10px] text-[#9a9590] tracking-[0.08em] uppercase mb-2 flex items-center justify-between">
+                      <span>術語庫 Master 術語</span>
+                      <div className="flex gap-2">
+                        <button onClick={() => setSelectedMaster(masterTerms.map(g => g.correct_term))} className="text-[#1a56db] hover:underline">全選</button>
+                        <span className="text-[#e2e0db]">|</span>
+                        <button onClick={() => setSelectedMaster([])} className="text-[#9a9590] hover:underline">全不選</button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {masterTerms.map(g => (
+                        <button key={g.id}
+                          onClick={() => setSelectedMaster(prev =>
+                            prev.includes(g.correct_term)
+                              ? prev.filter(t => t !== g.correct_term)
+                              : [...prev, g.correct_term]
+                          )}
+                          className={`px-3 py-1.5 rounded-full text-[12px] border transition-all font-medium ${
+                            selectedMaster.includes(g.correct_term)
+                              ? 'bg-[#eff4ff] border-[#c3d4fa] text-[#1a56db]'
+                              : 'bg-white border-[#e2e0db] text-[#9a9590]'
+                          }`}>
+                          {g.correct_term}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3 flex gap-2 mt-4">
                   <span className="text-[14px]">💡</span>
                   <div className="font-mono text-[11px] text-[#9a9590] leading-relaxed">術語會優先保留原始寫法，避免被自動修改。按 Enter 快速新增。</div>
                 </div>
