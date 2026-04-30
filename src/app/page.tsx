@@ -27,14 +27,13 @@ export default function CorrectionPage() {
 
   useEffect(() => {
     async function loadMaster() {
-      const { data } = await supabase.from('glossary').select('correct_term').eq('scope','master')
-      if (data) setMasterTerms(data.map((g:any) => g.correct_term))
+      const { data } = await supabase.from('glossary').select('correct_term').eq('scope', 'master')
+      if (data) setMasterTerms(data.map((g: any) => g.correct_term))
     }
     loadMaster()
   }, [])
 
   function handleFile(f: File) {
-    const ext = f.name.split('.').pop()?.toUpperCase() || ''
     setFileName(f.name)
     const reader = new FileReader()
     reader.onload = e => setRaw(e.target?.result as string || '')
@@ -51,7 +50,7 @@ export default function CorrectionPage() {
   async function runCorrection() {
     if (!raw.trim()) { setError('請先輸入字幕內容'); return }
     setLoading(true); setError('')
-    const allTerms = [...new Set([...terms, ...selectedMaster])]
+    const allTerms = Array.from(new Set([...terms, ...masterTerms]))
     const isVTT = raw.trimStart().startsWith('WEBVTT')
     const fmt = isVTT ? 'VTT' : 'SRT'
     const termTxt = allTerms.length ? `\n\n術語（保持原樣）：${allTerms.join('、')}` : ''
@@ -89,18 +88,17 @@ export default function CorrectionPage() {
   }
 
   function download() {
-    const isVTT = corrected.trimStart().startsWith('WEBVTT')
-    const ext = isVTT ? 'vtt' : 'srt'
-    const today = new Date().toISOString().slice(0,10).replace(/-/g,'')
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
     const name = [project, owner, today].filter(Boolean).join('_') || 'subtitle'
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([corrected], { type: 'text/plain;charset=utf-8' }))
-    a.download = `${name}_corrected.${ext}`
+    a.download = `${name}.vtt`
     a.click()
   }
 
   function reset() {
-    setStep(1); setProject(''); setOwner(''); setRaw(''); setFileName(''); setTerms([]); setCorrected(''); setError('')
+    setStep(1); setProject(''); setOwner(''); setRaw(''); setFileName('')
+    setTerms([]); setCorrected(''); setError('')
   }
 
   const origLines = raw.split('\n').length
@@ -109,13 +107,11 @@ export default function CorrectionPage() {
   return (
     <AppShell>
       <div className="flex flex-col items-center px-6 py-12">
-        {/* hero */}
         <div className="text-center mb-9">
           <div className="font-mono text-[11px] tracking-[0.2em] text-[#1a56db] uppercase mb-3">知識衛星 · Subtitle Correction System</div>
           <div className="font-serif text-[52px] font-bold text-[#111010] leading-tight">字幕自動校正</div>
         </div>
 
-        {/* step dots */}
         <div className="flex items-center mb-10">
           {[1,2,3,4].map((s, i) => (
             <div key={s} className="flex items-center">
@@ -125,9 +121,7 @@ export default function CorrectionPage() {
           ))}
         </div>
 
-        {/* card */}
         <div className="w-full max-w-[620px] bg-white border-[1.5px] border-[#e2e0db] rounded-2xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
-          {/* card icon area */}
           <div className="bg-[#f6f5f3] border-b border-[#e2e0db] px-10 py-7 flex items-center gap-5">
             <div className={`w-[60px] h-[60px] rounded-2xl flex items-center justify-center flex-shrink-0 ${step === 4 && corrected ? 'bg-[#059669]' : 'bg-[#1a56db]'}`}>
               {STEP_ICONS[step - 1]}
@@ -138,29 +132,29 @@ export default function CorrectionPage() {
             </div>
           </div>
 
-          {/* card body */}
           <div className="px-10 py-7">
-            {/* S1 */}
             {step === 1 && (
               <div className="flex flex-col gap-4">
-                <p className="text-[13px] text-[#9a9590] leading-relaxed">輸入專案名稱，術語記錄會依此分類存檔，方便日後查詢與管理。</p>
-                <input type="text" value={project} onChange={e => setProject(e.target.value)}
-                  placeholder="例：［2026-36］瓦基 AI"
-                  className="w-full bg-white border-[1.5px] border-[#e2e0db] rounded-lg text-[14px] px-4 py-3 outline-none focus:border-[#1a56db] transition-colors placeholder:text-[#9a9590]" />
-                <div className="mt-4">
+                <p className="text-[13px] text-[#9a9590] leading-relaxed">輸入專案名稱與負責人，術語記錄會依此分類存檔。</p>
+                <div>
+                  <label className="block font-mono text-[10px] text-[#9a9590] tracking-[0.08em] uppercase mb-1.5">專案名稱</label>
+                  <input type="text" value={project} onChange={e => setProject(e.target.value)}
+                    placeholder="例：［2026-36］瓦基 AI"
+                    className="w-full bg-white border-[1.5px] border-[#e2e0db] rounded-lg text-[14px] px-4 py-3 outline-none focus:border-[#1a56db] transition-colors placeholder:text-[#9a9590]" />
+                </div>
+                <div>
                   <label className="block font-mono text-[10px] text-[#9a9590] tracking-[0.08em] uppercase mb-1.5">負責人</label>
                   <input type="text" value={owner} onChange={e => setOwner(e.target.value)}
                     placeholder="例：Alan"
                     className="w-full bg-white border-[1.5px] border-[#e2e0db] rounded-lg text-[14px] px-4 py-3 outline-none focus:border-[#1a56db] transition-colors placeholder:text-[#9a9590]" />
                 </div>
-                <div className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3 flex gap-2 mt-4">
+                <div className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3 flex gap-2">
                   <span className="text-[14px]">💡</span>
                   <div className="font-mono text-[11px] text-[#9a9590] leading-relaxed">建議格式：［年份-流水號］專案簡稱<br />範例：［2026-36］瓦基 AI</div>
                 </div>
               </div>
             )}
 
-            {/* S2 */}
             {step === 2 && (
               <div className="flex flex-col gap-4">
                 <p className="text-[13px] text-[#9a9590] leading-relaxed">支援 .vtt 或 .srt 格式，也可直接貼上字幕內容。</p>
@@ -192,10 +186,9 @@ export default function CorrectionPage() {
               </div>
             )}
 
-            {/* S3 */}
             {step === 3 && (
               <div className="flex flex-col gap-4">
-                <p className="text-[13px] text-[#9a9590] leading-relaxed">加入要特別保留的術語、品牌名或人名。沒有的話可以直接略過。</p>
+                <p className="text-[13px] text-[#9a9590] leading-relaxed">加入要特別保留的術語、品牌名或人名。術語庫中的 master 術語會自動套用。</p>
                 <div className="flex gap-2">
                   <input type="text" value={termInput} onChange={e => setTermInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && addTerm()}
@@ -212,28 +205,26 @@ export default function CorrectionPage() {
                     ))}
                   </div>
                 )}
-                                          className={`px-3 py-1.5 rounded-full text-[12px] border transition-all font-medium ${
-                            selectedMaster.includes(g.correct_term)
-                              ? 'bg-[#eff4ff] border-[#c3d4fa] text-[#1a56db]'
-                              : 'bg-white border-[#e2e0db] text-[#9a9590]'
-                          }`}>
-                          {g.correct_term}
-                        </button>
+                {masterTerms.length > 0 && (
+                  <div className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3">
+                    <div className="font-mono text-[10px] text-[#9a9590] mb-2">術語庫自動套用（{masterTerms.length} 筆）</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {masterTerms.map((t, i) => (
+                        <span key={i} className="bg-white border border-[#e2e0db] rounded-full px-2.5 py-0.5 text-[11px] text-[#58544e]">{t}</span>
                       ))}
                     </div>
                   </div>
                 )}
-                <div className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3 flex gap-2 mt-4">
+                <div className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3 flex gap-2">
                   <span className="text-[14px]">💡</span>
-                  <div className="font-mono text-[11px] text-[#9a9590] leading-relaxed">術語會優先保留原始寫法，避免被自動修改。按 Enter 快速新增。</div>
+                  <div className="font-mono text-[11px] text-[#9a9590] leading-relaxed">術語會優先保留原始寫法，按 Enter 快速新增。</div>
                 </div>
               </div>
             )}
 
-            {/* S4 */}
             {step === 4 && (
               <div className="flex flex-col gap-4">
-                {loading && <div className="font-mono text-[12px] text-[#9a9590]">Claude 正在套用校正規則，請稍候...</div>}
+                {loading && <div className="font-mono text-[12px] text-[#9a9590]">正在套用校正規則，請稍候...</div>}
                 {error && <div className="font-mono text-[12px] text-red-600">錯誤：{error}</div>}
                 {corrected && (
                   <>
@@ -241,12 +232,12 @@ export default function CorrectionPage() {
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="#059669"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5l-4-4 1.41-1.41L11 13.67l6.59-6.59L19 8.5l-8 8z"/></svg>
                       <div>
                         <div className="text-[13px] text-[#065f46] font-medium">校正完成！</div>
-                        <div className="font-mono text-[11px] text-[#6b7280] mt-0.5">共 {newLines} 行 · 已套用 7 項規則</div>
+                        <div className="font-mono text-[11px] text-[#6b7280] mt-0.5">共 {newLines} 行 · 套用 {masterTerms.length + terms.length} 個術語</div>
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
-                      {[['原始行數', origLines], ['校正後行數', newLines], ['格式', raw.trimStart().startsWith('WEBVTT') ? 'VTT' : 'SRT']].map(([l, v]) => (
-                        <div key={l} className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3">
+                      {[['原始行數', origLines], ['校正後行數', newLines], ['格式', 'VTT']].map(([l, v]) => (
+                        <div key={String(l)} className="bg-[#f6f5f3] border border-[#e2e0db] rounded-lg px-4 py-3">
                           <div className="font-mono text-[22px] font-medium text-[#111010]">{v}</div>
                           <div className="font-mono text-[10px] text-[#9a9590] mt-0.5 uppercase tracking-[0.06em]">{l}</div>
                         </div>
@@ -269,7 +260,6 @@ export default function CorrectionPage() {
             )}
           </div>
 
-          {/* footer */}
           <div className="px-10 py-5 bg-[#f6f5f3] border-t border-[#e2e0db] flex items-center justify-between">
             {step === 4 ? (
               <>
@@ -278,7 +268,7 @@ export default function CorrectionPage() {
                   <button onClick={() => navigator.clipboard.writeText(corrected)}
                     className="bg-white border-[1.5px] border-[#e2e0db] rounded-lg text-[13px] font-medium text-[#58544e] px-5 py-2.5 hover:border-[#c9c6c0] transition-all">複製</button>
                   <button onClick={download}
-                    className="bg-[#1a56db] border-none rounded-lg text-[13px] font-medium text-white px-5 py-2.5 hover:bg-[#1648c2] transition-all">下載檔案</button>
+                    className="bg-[#1a56db] border-none rounded-lg text-[13px] font-medium text-white px-5 py-2.5 hover:bg-[#1648c2] transition-all">下載 .vtt</button>
                 </div>
               </>
             ) : (
