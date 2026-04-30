@@ -78,8 +78,8 @@ export default function CorrectionPage() {
   }
 
   function download() {
-    const isVTT = corrected.trimStart().startsWith('WEBVTT')
-    const ext = isVTT ? 'vtt' : 'srt'
+    const isVTT = true
+    const ext = 'vtt'
     const today = new Date().toISOString().slice(0,10).replace(/-/g,'')
     const name = [project, owner, today].filter(Boolean).join('_') || 'subtitle'
     const a = document.createElement('a')
